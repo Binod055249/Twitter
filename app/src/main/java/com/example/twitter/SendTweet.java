@@ -10,14 +10,21 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import com.parse.FindCallback;
 import com.parse.Parse;
 import com.parse.ParseException;
 import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.shashank.sony.fancytoastlib.FancyToast;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class SendTweet extends AppCompatActivity implements View.OnClickListener{
      private EditText edtSendTweet;
@@ -88,7 +95,31 @@ public class SendTweet extends AppCompatActivity implements View.OnClickListener
 
                 break;
             case R.id.btnViewTweets:
-               
+                final ArrayList<HashMap<String ,String>> tweetList =new ArrayList<>();
+                final SimpleAdapter simpleAdapter=new SimpleAdapter(SendTweet.this,tweetList,
+                        android.R.layout.simple_list_item_2,new String[]{"tweetUserName","tweetValue"},
+                        new int[]{android.R.id.text1,android.R.id.text2});
+                try{
+                    ParseQuery<ParseObject> parseQuery=ParseQuery.getQuery("MyTweets");
+                    parseQuery.whereContainedIn("user",ParseUser.getCurrentUser().getList("fanOf"));
+                    parseQuery.findInBackground(new FindCallback<ParseObject>() {
+                        @Override
+                        public void done(List<ParseObject> objects, ParseException e) {
+                            if(objects.size()>0 && e==null){
+                                for(ParseObject tweetObjects : objects){
+                                    HashMap<String,String> userTweet=new HashMap<>();
+                                    userTweet.put("tweetUserName",tweetObjects.getString("user"));
+                                    userTweet.put("tweetValue",tweetObjects.getString("tweet"));
+                                    tweetList.add(userTweet);
+                                }
+                                viewTweetListView.setAdapter(simpleAdapter);
+                            }
+                        }
+                    });
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+
                 break;
         }
     }
